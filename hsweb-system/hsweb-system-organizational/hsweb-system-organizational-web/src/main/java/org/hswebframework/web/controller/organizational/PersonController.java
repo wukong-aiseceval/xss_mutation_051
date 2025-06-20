@@ -49,16 +49,16 @@ import java.util.List;
 @Api(value = "人员管理", tags = "组织架构-人员管理")
 public class PersonController implements SimpleGenericEntityController<PersonEntity, String, QueryParamEntity> {
 
-    private PersonService personService;
+    private PersonService personSvc;
 
     @Autowired
     public void setPersonService(PersonService personService) {
-        this.personService = personService;
+        this.personSvc = personService;
     }
 
     @Override
     public PersonService getService() {
-        return personService;
+        return personSvc;
     }
 
     @Override
@@ -83,7 +83,7 @@ public class PersonController implements SimpleGenericEntityController<PersonEnt
         PersonnelAuthentication authorization = PersonnelAuthentication
                 .current()
                 .orElseThrow(NotFoundException::new);
-        PersonAuthBindEntity old = personService
+        PersonAuthBindEntity old = personSvc
                 .selectAuthBindByPk(authorization.getPersonnel().getId());
 
         bindEntity.setUserId(old.getUserId());
@@ -94,7 +94,7 @@ public class PersonController implements SimpleGenericEntityController<PersonEnt
             bindEntity.getPersonUser().setUsername(old.getPersonUser().getUsername());
         }
 
-        personService.updateByPk(bindEntity);
+        personSvc.updateByPk(bindEntity);
         return ResponseMessage.ok();
     }
 
@@ -119,7 +119,7 @@ public class PersonController implements SimpleGenericEntityController<PersonEnt
     @ApiOperation("查看人员详情")
     @Authorize(action = Permission.ACTION_GET)
     public ResponseMessage<PersonAuthBindEntity> getDetail(@PathVariable String id) {
-        return ResponseMessage.ok(personService.selectAuthBindByPk(id));
+        return ResponseMessage.ok(personSvc.selectAuthBindByPk(id));
     }
 
     @PostMapping("/detail")
@@ -127,7 +127,7 @@ public class PersonController implements SimpleGenericEntityController<PersonEnt
     @Authorize(action = Permission.ACTION_ADD)
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseMessage<String> getDetail(@RequestBody PersonAuthBindEntity bindEntity) {
-        return ResponseMessage.ok(personService.insert(bindEntity));
+        return ResponseMessage.ok(personSvc.insert(bindEntity));
     }
 
     @PutMapping("/{id}/detail")
@@ -135,7 +135,7 @@ public class PersonController implements SimpleGenericEntityController<PersonEnt
     @Authorize(action = Permission.ACTION_UPDATE)
     public ResponseMessage<String> getDetail(@PathVariable String id, @RequestBody PersonAuthBindEntity bindEntity) {
         bindEntity.setId(id);
-        personService.updateByPk(bindEntity);
+        personSvc.updateByPk(bindEntity);
         return ResponseMessage.ok();
     }
 
@@ -143,6 +143,6 @@ public class PersonController implements SimpleGenericEntityController<PersonEnt
     @ApiOperation("获取指定岗位的人员")
     @Authorize(action = Permission.ACTION_GET)
     public ResponseMessage<List<PersonEntity>> getByPositionId(@PathVariable String positionId) {
-        return ResponseMessage.ok(personService.selectByPositionId(positionId));
+        return ResponseMessage.ok(personSvc.selectByPositionId(positionId));
     }
 }

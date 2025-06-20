@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings("unchecked")
 public class HswebResponseConvertSupport implements ResponseConvertForProviderDefinition {
 
-    private AuthenticationBuilderFactory authenticationBuilderFactory;
+    private AuthenticationBuilderFactory authBuilderFactory;
 
     private static int responseMessageFieldSize = 4;
 
@@ -53,7 +53,7 @@ public class HswebResponseConvertSupport implements ResponseConvertForProviderDe
             new HashSet<>(Arrays.asList("exception", "path", "error", "message", "timestamp", "status"));
 
     public HswebResponseConvertSupport(AuthenticationBuilderFactory authenticationBuilderFactory) {
-        this.authenticationBuilderFactory = authenticationBuilderFactory;
+        this.authBuilderFactory = authenticationBuilderFactory;
     }
 
 
@@ -106,8 +106,8 @@ public class HswebResponseConvertSupport implements ResponseConvertForProviderDe
     }
 
     protected <T> T convertAuthentication(String json) {
-        if (authenticationBuilderFactory != null) {
-            return (T) authenticationBuilderFactory.create().json(json).build();
+        if (authBuilderFactory != null) {
+            return (T) authBuilderFactory.create().json(json).build();
         } else {
             throw new UnsupportedOperationException("authenticationBuilderFactory not ready");
         }

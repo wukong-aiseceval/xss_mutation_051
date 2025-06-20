@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 public class DataBaseManagerController {
 
     @Autowired
-    private DatabaseManagerService databaseManagerService;
+    private DatabaseManagerService dbManagerService;
 
     @GetMapping("/metas")
     @Authorize(action = Permission.ACTION_QUERY, description = "获取元数据")
@@ -48,7 +48,7 @@ public class DataBaseManagerController {
             @ApiParam("数据源ID") String datasourceId) throws Exception {
 
         DataSourceHolder.switcher().use(datasourceId);
-        return ResponseMessage.ok(databaseManagerService.getMetas());
+        return ResponseMessage.ok(dbManagerService.getMetas());
     }
 
     @PostMapping(value = "/execute/{datasourceId}", consumes = MediaType.TEXT_PLAIN_VALUE)
@@ -58,7 +58,7 @@ public class DataBaseManagerController {
             @PathVariable @ApiParam("数据源ID") String datasourceId,
             @RequestBody @ApiParam("SQL脚本") String sqlLines) throws Exception {
         DataSourceHolder.switcher().use(datasourceId);
-        return ResponseMessage.ok(databaseManagerService.execute(SqlExecuteRequest.builder()
+        return ResponseMessage.ok(dbManagerService.execute(SqlExecuteRequest.builder()
                 .sql(parseSql(sqlLines, datasourceId))
                 .build()));
 
@@ -69,7 +69,7 @@ public class DataBaseManagerController {
     @Authorize(action = "execute", description = "执行SQL")
     public ResponseMessage<List<SqlExecuteResult>> execute(@RequestBody
                                                            @ApiParam("SQL脚本") String sqlLines) throws Exception {
-        return ResponseMessage.ok(databaseManagerService
+        return ResponseMessage.ok(dbManagerService
                 .execute(SqlExecuteRequest.builder()
                         .sql(parseSql(sqlLines, null))
                         .build()));
@@ -80,7 +80,7 @@ public class DataBaseManagerController {
     @ApiOperation(value = "开启事务执行SQL")
     public ResponseMessage<List<SqlExecuteResult>> executeTransactional(@PathVariable @ApiParam("事务ID") String transactionalId,
                                                                         @ApiParam("SQL脚本") @RequestBody String sqlLines) throws Exception {
-        return ResponseMessage.ok(databaseManagerService.execute(transactionalId, SqlExecuteRequest.builder()
+        return ResponseMessage.ok(dbManagerService.execute(transactionalId, SqlExecuteRequest.builder()
                 .sql(parseSql(sqlLines, null))
                 .build()));
     }
@@ -92,7 +92,7 @@ public class DataBaseManagerController {
                                                                         @PathVariable @ApiParam("数据源ID") String dataSourceId,
                                                                         @ApiParam("SQL脚本") @RequestBody String sqlLines) throws Exception {
         DataSourceHolder.switcher().use(dataSourceId);
-        return ResponseMessage.ok(databaseManagerService.execute(transactionalId, SqlExecuteRequest.builder()
+        return ResponseMessage.ok(dbManagerService.execute(transactionalId, SqlExecuteRequest.builder()
                 .sql(parseSql(sqlLines, dataSourceId))
                 .build()));
     }
@@ -101,7 +101,7 @@ public class DataBaseManagerController {
     @Authorize(action = "execute", description = "执行SQL")
     @ApiOperation("新建事务")
     public ResponseMessage<String> newTransaction() throws Exception {
-        return ResponseMessage.ok(databaseManagerService.newTransaction());
+        return ResponseMessage.ok(dbManagerService.newTransaction());
     }
 
     @GetMapping("/transactional/new/{dataSourceId}")
@@ -109,7 +109,7 @@ public class DataBaseManagerController {
     @ApiOperation("指定数据源新建事务")
     public ResponseMessage<String> newTransaction(@PathVariable String dataSourceId) throws Exception {
         DataSourceHolder.switcher().use(dataSourceId);
-        return ResponseMessage.ok(databaseManagerService.newTransaction(dataSourceId));
+        return ResponseMessage.ok(dbManagerService.newTransaction(dataSourceId));
     }
 
 
@@ -117,14 +117,14 @@ public class DataBaseManagerController {
     @Authorize(action = "execute", description = "执行SQL")
     @ApiOperation("获取全部事务信息")
     public ResponseMessage<List<TransactionInfo>> allTransaction() throws Exception {
-        return ResponseMessage.ok(databaseManagerService.allTransaction());
+        return ResponseMessage.ok(dbManagerService.allTransaction());
     }
 
     @PostMapping("/transactional/{id}/commit")
     @Authorize(action = "execute", description = "执行SQL")
     @ApiOperation("提交事务")
     public ResponseMessage<String> commitTransaction(@PathVariable String id) throws Exception {
-        databaseManagerService.commit(id);
+        dbManagerService.commit(id);
         return ResponseMessage.ok();
     }
 
@@ -132,7 +132,7 @@ public class DataBaseManagerController {
     @Authorize(action = "execute", description = "执行SQL")
     @ApiOperation("回滚事务")
     public ResponseMessage<String> rollbackTransaction(@PathVariable String id) throws Exception {
-        databaseManagerService.rollback(id);
+        dbManagerService.rollback(id);
         return ResponseMessage.ok();
     }
 

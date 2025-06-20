@@ -197,14 +197,14 @@ public interface EnumDict<V> extends JSONSerializable {
         if (allOptions.size() >= 64) {
             throw new UnsupportedOperationException("不支持选项超过64个数据字典!");
         }
-        List<T> arr = new ArrayList<>();
+        List<T> resultList = new ArrayList<>();
         List<T> all = allOptions;
         for (T t : all) {
             if (t.in(mask)) {
-                arr.add(t);
+                resultList.add(t);
             }
         }
-        return arr;
+        return resultList;
     }
 
     static <T extends EnumDict> List<T> getByMask(Supplier<List<T>> allOptionsSupplier, long mask) {

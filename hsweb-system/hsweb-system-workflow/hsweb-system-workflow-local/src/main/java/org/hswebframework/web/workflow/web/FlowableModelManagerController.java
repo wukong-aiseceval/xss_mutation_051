@@ -56,7 +56,7 @@ import java.util.Map;
 public class FlowableModelManagerController {
 
     @Autowired
-    private RepositoryService repositoryService;
+    private RepositoryService repoService;
 
     private final static String MODEL_ID          = "modelId";
     private final static String MODEL_NAME        = "name";
@@ -68,7 +68,7 @@ public class FlowableModelManagerController {
     @Authorize(action = Permission.ACTION_QUERY)
     @ApiOperation("获取模型列表")
     public ResponseMessage<PagerResult<Model>> getModelList(QueryParamEntity param) {
-        ModelQuery modelQuery = repositoryService.createModelQuery();
+        ModelQuery modelQuery = repoService.createModelQuery();
         return ResponseMessage.ok(
                 QueryUtils.doQuery(modelQuery, param,
                         model -> FastBeanCopier.copy(model, new ModelEntity()),
@@ -95,12 +95,12 @@ public class FlowableModelManagerController {
         modelObjectNode.put(MODEL_KEY, model.getKey());
         modelObjectNode.put(MODEL_NAME, model.getName());
 
-        Model modelData = repositoryService.newModel();
+        Model modelData = repoService.newModel();
         modelData.setMetaInfo(modelObjectNode.toJSONString());
         modelData.setName(model.getName());
         modelData.setKey(model.getKey());
-        repositoryService.saveModel(modelData);
-        repositoryService.addModelEditorSource(modelData.getId(), editorNode.toString().getBytes("utf-8"));
+        repoService.saveModel(modelData);
+        repoService.addModelEditorSource(modelData.getId(), editorNode.toString().getBytes("utf-8"));
         return ResponseMessage.ok(modelData).status(201);
     }
 
@@ -108,15 +108,15 @@ public class FlowableModelManagerController {
     @ApiOperation("发布模型")
     @Authorize(action = "deploy")
     public ResponseMessage<Deployment> deployModel(@PathVariable String modelId) throws Exception {
-        Model modelData = repositoryService.getModel(modelId);
+        Model modelData = repoService.getModel(modelId);
         if (modelData == null) {
             throw new NotFoundException("模型不存在!");
         }
-        ObjectNode modelNode = (ObjectNode) new ObjectMapper().readTree(repositoryService.getModelEditorSource(modelData.getId()));
+        ObjectNode modelNode = (ObjectNode) new ObjectMapper().readTree(repoService.getModelEditorSource(modelData.getId()));
         BpmnModel model = new BpmnJsonConverter().convertToBpmnModel(modelNode);
         byte[] bpmnBytes = new BpmnXMLConverter().convertToXML(model);
         String processName = modelData.getName() + ".bpmn20.xml";
-        Deployment deployment = repositoryService.createDeployment()
+        Deployment deployment = repoService.createDeployment()
                 .name(modelData.getName())
                 .addString(processName, new String(bpmnBytes, "utf8"))
                 .deploy();
@@ -136,9 +136,9 @@ public class FlowableModelManagerController {
                        @PathVariable("type") @ApiParam(value = "类型", allowableValues = "bpmn,json", example = "json") String type,
                        @ApiParam(hidden = true) HttpServletResponse response) {
         try {
-            Model modelData = repositoryService.getModel(modelId);
+            Model modelData = repoService.getModel(modelId);
             BpmnJsonConverter jsonConverter = new BpmnJsonConverter();
-            byte[] modelEditorSource = repositoryService.getModelEditorSource(modelData.getId());
+            byte[] modelEditorSource = repoService.getModelEditorSource(modelData.getId());
 
             JsonNode editorNode = new ObjectMapper().readTree(modelEditorSource);
             BpmnModel bpmnModel = jsonConverter.convertToBpmnModel(editorNode);
@@ -191,7 +191,7 @@ public class FlowableModelManagerController {
     @Authorize(action = Permission.ACTION_GET)
     public Object getEditorJson(@PathVariable String modelId) {
         JSONObject modelNode;
-        Model model = repositoryService.getModel(modelId);
+        Model model = repoService.getModel(modelId);
         if (model == null) throw new NullPointerException("模型不存在");
         if (StringUtils.isNotEmpty(model.getMetaInfo())) {
             modelNode = JSON.parseObject(model.getMetaInfo());
@@ -200,7 +200,7 @@ public class FlowableModelManagerController {
             modelNode.put(MODEL_NAME, model.getName());
         }
         modelNode.put(MODEL_ID, model.getId());
-        modelNode.put("model", JSON.parse(new String(repositoryService.getModelEditorSource(model.getId()))));
+        modelNode.put("model", JSON.parse(new String(repoService.getModelEditorSource(model.getId()))));
         return modelNode;
     }
 
@@ -209,7 +209,7 @@ public class FlowableModelManagerController {
     @Authorize(action = Permission.ACTION_UPDATE)
     public void saveModel(@PathVariable String modelId,
                           @RequestParam Map<String, String> values) throws TranscoderException, IOException {
-        Model model = repositoryService.getModel(modelId);
+        Model model = repoService.getModel(modelId);
         JSONObject modelJson = JSON.parseObject(model.getMetaInfo());
 
         modelJson.put(MODEL_NAME, values.get("name"));
@@ -218,9 +218,9 @@ public class FlowableModelManagerController {
         model.setMetaInfo(modelJson.toString());
         model.setName(values.get("name"));
 
-        repositoryService.saveModel(model);
+        repoService.saveModel(model);
 
-        repositoryService.addModelEditorSource(model.getId(), values.get("json_xml").getBytes("utf-8"));
+        repoService.addModelEditorSource(model.getId(), values.get("json_xml").getBytes("utf-8"));
 
         InputStream svgStream = new ByteArrayInputStream(values.get("svg_xml").getBytes("utf-8"));
         TranscoderInput input = new TranscoderInput(svgStream);
@@ -233,14 +233,14 @@ public class FlowableModelManagerController {
         // Do the transformation
         transcoder.transcode(input, output);
         final byte[] result = outStream.toByteArray();
-        repositoryService.addModelEditorSourceExtra(model.getId(), result);
+        repoService.addModelEditorSourceExtra(model.getId(), result);
         outStream.close();
     }
 
     @DeleteMapping("/{modelId}")
     @Authorize(action = Permission.ACTION_DELETE)
     public ResponseMessage<Void> delete(@PathVariable String modelId) {
-        repositoryService.deleteModel(modelId);
+        repoService.deleteModel(modelId);
         return ResponseMessage.ok();
     }
 }
